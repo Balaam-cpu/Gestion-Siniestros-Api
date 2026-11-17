@@ -37,7 +37,7 @@ dotnet user-secrets set "ConnectionStrings:ClaimsDb" "Server=(localdb)\MSSQLLoca
 dotnet user-secrets set "ConnectionStrings:ClaimsDb" "Server=localhost;Database=GestionSiniestros;User Id=<usuario>;Password=<contraseña>;TrustServerCertificate=True"
 ```
 
-Si falta la cadena, la API no arranca y muestra un mensaje indicando cómo configurarla.
+Si falta la cadena, la API no arranca y muestra el error `Falta la cadena de conexión 'ConnectionStrings:ClaimsDb'`.
 
 ## Migraciones
 
