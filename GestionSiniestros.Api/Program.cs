@@ -1,7 +1,12 @@
+using System.Text.Json.Serialization;
 using GestionSiniestros.Api.Data;
 using GestionSiniestros.Api.Interfaces;
 using GestionSiniestros.Api.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
+
+const string ApiRoutePrefix = "api/v1";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +20,17 @@ builder.Services.AddDbContext<ClaimsDbContext>(options =>
 
 builder.Services.AddScoped<IClaimService, ClaimService>();
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers(options =>
+    {
+        options.Conventions.Add(new ApiRoutePrefixConvention(ApiRoutePrefix));
+    })
+    .AddJsonOptions(options =>
+    {
+        // Los estados viajan como strings ("Open", "InReview", "Closed"), no como números.
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -44,3 +59,21 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapControllers();
 app.Run();
+
+file sealed class ApiRoutePrefixConvention(string prefix) : IApplicationModelConvention
+{
+    private readonly AttributeRouteModel _prefix = new(new RouteAttribute(prefix));
+
+    public void Apply(ApplicationModel application)
+    {
+        foreach (var controller in application.Controllers)
+        {
+            foreach (var selector in controller.Selectors)
+            {
+                selector.AttributeRouteModel = selector.AttributeRouteModel is null
+                    ? new AttributeRouteModel(_prefix)
+                    : AttributeRouteModel.CombineAttributeRouteModel(_prefix, selector.AttributeRouteModel);
+            }
+        }
+    }
+}
