@@ -24,9 +24,7 @@ public class SaveClaimRequest : IValidatableObject
     {
         if (EstimatedAmount is decimal amount && decimal.Round(amount, 2) != amount)
         {
-            yield return new ValidationResult(
-                "El monto estimado admite como máximo dos decimales.",
-                [nameof(EstimatedAmount)]);
+            yield return new ValidationResult("El monto estimado admite como máximo dos decimales.", [nameof(EstimatedAmount)]);
         }
     }
 }

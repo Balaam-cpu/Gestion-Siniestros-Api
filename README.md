@@ -85,3 +85,34 @@ Prefijo `/api/v1`, configurado en `Program.cs`.
 - POST/PUT reciben `policyNumber`, `insuredName`, `claimType` y `estimatedAmount` (mayor que cero, máximo dos decimales).
 - Al crear, el estado es `Open` y se registra el evento inicial del historial (`previousStatus: null`).
 - PATCH recibe `{ "status": "InReview" }`; registra estado anterior, nuevo y fecha. Si el estado es igual al actual responde 400.
+
+## Manejo de errores
+
+Todas las respuestas de error usan el formato ProblemDetails (`application/problem+json`) e incluyen `traceId`.
+Se configura en `Program.cs` con `AddProblemDetails`, `UseExceptionHandler` y `UseStatusCodePages`; los
+controladores no tienen `try/catch`.
+
+- **400 de validación y 404:** sin cambios; las genera MVC (`[ApiController]`).
+- **500 por excepción no controlada:** respuesta genérica en español, sin stack trace, mensajes SQL ni detalles internos:
+
+  ```json
+  {
+    "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+    "title": "Error interno del servidor.",
+    "status": 500,
+    "detail": "Ocurrió un error inesperado. Si el problema persiste, comunícate con soporte e indica el traceId.",
+    "traceId": "00-<trace-id>-<span-id>-00"
+  }
+  ```
+
+- **Errores sin cuerpo** (ruta inexistente, método no permitido, etc.): `UseStatusCodePages` los devuelve como ProblemDetails.
+  No modifica las respuestas que ya tienen cuerpo.
+
+**Correlación con logs:** el `ExceptionHandlerMiddleware` registra la excepción completa en el log con nivel Error.
+Con `Logging:Console:IncludeScopes` activo (`appsettings.json`), la línea del log incluye `TraceId:<trace-id>`, que es
+el segundo segmento del `traceId` devuelto al cliente.
+
+**Prueba manual del 500:** con la API detenida, cambia temporalmente la cadena de conexión a un servidor inexistente
+(`dotnet user-secrets set "ConnectionStrings:ClaimsDb" "Server=noexiste;Database=GestionSiniestros;Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=3"`),
+arranca la API y llama a `GET /api/v1/claims`. Debe responder el 500 genérico y la consola debe mostrar la excepción
+con el mismo TraceId. Después restaura la cadena original.

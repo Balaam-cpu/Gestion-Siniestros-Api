@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using GestionSiniestros.Api.Data;
 using GestionSiniestros.Api.Interfaces;
@@ -6,19 +7,40 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 
+const string AngularDevCorsPolicy = "AngularDev";
 const string ApiRoutePrefix = "api/v1";
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("ClaimsDb")
     ?? throw new InvalidOperationException(
-        "Falta la cadena de conexión 'ConnectionStrings:ClaimsDb'. " +
-        "Configúrala con: dotnet user-secrets set ""ConnectionStrings:ClaimsDb"" ""<cadena>""");
+        "Falta la cadena de conexión 'ConnectionStrings:ClaimsDb'. ");
 
 builder.Services.AddDbContext<ClaimsDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IClaimService, ClaimService>();
+
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        var traceId = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+
+        if (context.Exception is not null)
+        {
+            context.ProblemDetails.Status = StatusCodes.Status500InternalServerError;
+            context.ProblemDetails.Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1";
+            context.ProblemDetails.Title = "Error interno del servidor.";
+            context.ProblemDetails.Detail =
+                "Ocurrió un error inesperado. Si el problema persiste, comunícate con soporte e indica el traceId.";
+            context.ProblemDetails.Instance = null;
+            context.ProblemDetails.Extensions.Clear();
+        }
+
+        context.ProblemDetails.Extensions.TryAdd("traceId", traceId);
+    };
+});
 
 builder.Services
     .AddControllers(options =>
@@ -34,10 +56,9 @@ builder.Services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-const string AngularDevCorsPolicy = "AngularDev";
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
-    .Get<string[]>() ?? Array.Empty<string>();
+    .Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
 {
@@ -49,6 +70,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -57,7 +82,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.MapControllers();
+
 app.Run();
 
 file sealed class ApiRoutePrefixConvention(string prefix) : IApplicationModelConvention
