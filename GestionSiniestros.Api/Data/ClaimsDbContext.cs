@@ -12,9 +12,7 @@ public class ClaimsDbContext(DbContextOptions<ClaimsDbContext> options) : DbCont
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var utcConverter = new ValueConverter<DateTime, DateTime>(
-            value => value,
-            value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+        var utcConverter = new ValueConverter<DateTime, DateTime>(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
 
         modelBuilder.Entity<Claim>(entity =>
         {
