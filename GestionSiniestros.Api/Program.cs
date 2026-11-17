@@ -1,4 +1,6 @@
 using GestionSiniestros.Api.Data;
+using GestionSiniestros.Api.Interfaces;
+using GestionSiniestros.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,8 @@ var connectionString = builder.Configuration.GetConnectionString("ClaimsDb")
 
 builder.Services.AddDbContext<ClaimsDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IClaimService, ClaimService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
