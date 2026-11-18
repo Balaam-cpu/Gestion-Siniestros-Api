@@ -29,6 +29,8 @@ dotnet ef migrations has-pending-model-changes
 dotnet ef database update
 ```
 
+`dotnet ef database update` crea la base de datos `GestionSiniestros` si aún no existe y aplica las migraciones pendientes. La cuenta de SQL Server debe tener permisos para crear la base.
+
 Para crear una migración nueva:
 
 ```powershell
@@ -107,6 +109,8 @@ Para cambiar el estado, envía un `PATCH` a `/api/v1/claims/{id}/status`:
 
 Los estados se envían como strings: `Open`, `InReview` o `Closed`. Se rechazan valores numéricos. Las fechas se manejan en UTC y se envían en formato ISO 8601.
 
+Los campos `policyNumber`, `insuredName` y `claimType` son obligatorios, se recortan espacios externos y aceptan como máximo 50, 200 y 100 caracteres, respectivamente. `estimatedAmount` debe estar entre `0.01` y `9999999999999999.99` y admite hasta dos decimales.
+
 Al crear un siniestro, su estado inicial es `Open` y se registra el evento correspondiente en el historial. Si se solicita el estado actual, la API responde 400 y no agrega otro evento.
 
 ## Errores
@@ -130,5 +134,5 @@ Con SQL Server iniciado, migraciones aplicadas y la API en ejecución, abre http
 4. Repite el PATCH con el estado actual. Debe responder 400 y no agregar otro evento.
 5. Filtra el listado por un prefijo de póliza y combina el filtro con un estado.
 6. Actualiza los datos con PUT y confirma que updatedAt cambió.
-7. Prueba un monto 0 y otro con más de dos decimales; ambos deben responder 400.
+7. Prueba un monto 0, uno con más de dos decimales (`10.555`) y uno por encima del máximo (`10000000000000000.00`); deben responder 400. El máximo `9999999999999999.99` debe aceptarse. Prueba también un texto que exceda el límite de su campo; debe responder 400.
 8. Elimina el siniestro con DELETE (204) y vuelve a consultar su detalle; debe responder 404.
