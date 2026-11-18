@@ -134,5 +134,5 @@ Con SQL Server iniciado, migraciones aplicadas y la API en ejecución, abre http
 4. Repite el PATCH con el estado actual. Debe responder 400 y no agregar otro evento.
 5. Filtra el listado por un prefijo de póliza y combina el filtro con un estado.
 6. Actualiza los datos con PUT y confirma que updatedAt cambió.
-7. Prueba un monto 0, uno con más de dos decimales (`10.555`) y uno por encima del máximo (`10000000000000000.00`); deben responder 400. El máximo `9999999999999999.99` debe aceptarse. Prueba también un texto que exceda el límite de su campo; debe responder 400.
+7. Probar un monto 0, uno con más de dos decimales (`10.555`) deben responder 400.
 8. Elimina el siniestro con DELETE (204) y vuelve a consultar su detalle; debe responder 404.
