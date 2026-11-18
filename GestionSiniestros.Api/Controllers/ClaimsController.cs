@@ -12,6 +12,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<ClaimResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IReadOnlyList<ClaimResponse>>> GetAll([FromQuery] string? policyNumber, [FromQuery] ClaimStatus? status, CancellationToken cancellationToken)
     {
         var claims = await claimService.GetAllAsync(policyNumber, status, cancellationToken);
@@ -21,6 +22,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [HttpGet("{id:int}")]
     [ProducesResponseType<ClaimResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ClaimResponse>> GetById(int id, CancellationToken cancellationToken)
     {
         var claim = await claimService.GetByIdAsync(id, cancellationToken);
@@ -30,6 +32,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [HttpPost]
     [ProducesResponseType<ClaimResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ClaimResponse>> Create(SaveClaimRequest request, CancellationToken cancellationToken)
     {
         var created = await claimService.CreateAsync(request, cancellationToken);
@@ -40,6 +43,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [ProducesResponseType<ClaimResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ClaimResponse>> Update(int id, SaveClaimRequest request, CancellationToken cancellationToken)
     {
         var updated = await claimService.UpdateAsync(id, request, cancellationToken);
@@ -50,6 +54,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [ProducesResponseType<ClaimResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ClaimResponse>> ChangeStatus(int id, ChangeClaimStatusRequest request, CancellationToken cancellationToken)
     {
         var (outcome, claim) = await claimService.ChangeStatusAsync(id, request.Status!.Value, cancellationToken);
@@ -69,6 +74,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var deleted = await claimService.DeleteAsync(id, cancellationToken);
@@ -78,6 +84,7 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     [HttpGet("{id:int}/status-history")]
     [ProducesResponseType<IReadOnlyList<ClaimStatusHistoryResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IReadOnlyList<ClaimStatusHistoryResponse>>> GetStatusHistory(int id, CancellationToken cancellationToken)
     {
         var history = await claimService.GetStatusHistoryAsync(id, cancellationToken);

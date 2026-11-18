@@ -26,18 +26,6 @@ builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = context =>
     {
         var traceId = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
-
-        if (context.Exception is not null)
-        {
-            context.ProblemDetails.Status = StatusCodes.Status500InternalServerError;
-            context.ProblemDetails.Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1";
-            context.ProblemDetails.Title = "Error interno del servidor.";
-            context.ProblemDetails.Detail =
-                "Ocurrió un error inesperado. Si el problema persiste, comunícate con soporte e indica el traceId.";
-            context.ProblemDetails.Instance = null;
-            context.ProblemDetails.Extensions.Clear();
-        }
-
         context.ProblemDetails.Extensions.TryAdd("traceId", traceId);
     };
 });
@@ -70,7 +58,24 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(exceptionHandlerApp =>
+{
+    exceptionHandlerApp.Run(async context =>
+    {
+        var problem = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+            Title = "Error interno del servidor.",
+            Status = StatusCodes.Status500InternalServerError,
+            Detail = "Ocurrió un error inesperado. Si el problema persiste, comunícate con soporte e indica el traceId."
+        };
+        problem.Extensions["traceId"] = Activity.Current?.Id ?? context.TraceIdentifier;
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+        await context.Response.WriteAsJsonAsync(problem, options: null, contentType: "application/problem+json", context.RequestAborted);
+    });
+});
 
 app.UseStatusCodePages();
 
