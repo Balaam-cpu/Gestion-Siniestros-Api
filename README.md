@@ -57,7 +57,7 @@ En desarrollo, CORS permite el origen `http://localhost:4200`; se configura en `
 
 ## Estructura del proyecto
 
-- Program.cs: configura inyección de dependencias, Entity Framework, CORS, prefijo de rutas, Swagger y errores globales.
+- Program.cs: configura inyección de dependencias, Entity Framework, CORS, versionado (`Asp.Versioning`), Swagger y errores globales.
 - Controllers: adaptan las solicitudes HTTP y delegan en IClaimService.
 - Interfaces y Services: definen e implementan las operaciones del negocio.
 - Data: ClaimsDbContext y migraciones Code First.
@@ -76,7 +76,7 @@ Swagger muestra los endpoints, parámetros, respuestas y modelos de solicitud.
 
 ## Endpoints
 
-Todas las rutas usan el prefijo `/api/v1`.
+Todas las rutas usan el prefijo `/api/v1`. La versión se maneja con `Asp.Versioning`: el controlador declara `[Route("api/v{version:apiVersion}/claims")]` y `Program.cs` registra el versionado (`AddApiVersioning`, versión por defecto 1.0, `ReportApiVersions`) y el API Explorer para que Swagger muestre `/api/v1/...`.
 
 | Método | Ruta | Respuestas principales |
 | ------ | ---- | ---------------------- |

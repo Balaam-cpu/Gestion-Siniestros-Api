@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GestionSiniestros.Api.Controllers;
 
 [ApiController]
-[Route("claims")]
+[Route("api/v{version:apiVersion}/claims")]
 public class ClaimsController(IClaimService claimService) : ControllerBase
 {
     [HttpGet]
@@ -58,7 +58,6 @@ public class ClaimsController(IClaimService claimService) : ControllerBase
     public async Task<ActionResult<ClaimResponse>> ChangeStatus(int id, ChangeClaimStatusRequest request, CancellationToken cancellationToken)
     {
         var (outcome, claim) = await claimService.ChangeStatusAsync(id, request.Status!.Value, cancellationToken);
-
         switch (outcome)
         {
             case ChangeStatusOutcome.NotFound:

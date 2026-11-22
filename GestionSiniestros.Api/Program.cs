@@ -1,14 +1,13 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
+using Asp.Versioning;
 using GestionSiniestros.Api.Data;
 using GestionSiniestros.Api.Interfaces;
 using GestionSiniestros.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.EntityFrameworkCore;
 
 const string AngularDevCorsPolicy = "AngularDev";
-const string ApiRoutePrefix = "api/v1";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,15 +30,23 @@ builder.Services.AddProblemDetails(options =>
 });
 
 builder.Services
-    .AddControllers(options =>
-    {
-        options.Conventions.Add(new ApiRoutePrefixConvention(ApiRoutePrefix));
-    })
+    .AddControllers()
     .AddJsonOptions(options =>
     {
         // Los estados viajan como strings ("Open", "InReview", "Closed"), no como números.
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
     });
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+}).AddMvc().AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -91,21 +98,3 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
-
-file sealed class ApiRoutePrefixConvention(string prefix) : IApplicationModelConvention
-{
-    private readonly AttributeRouteModel _prefix = new(new RouteAttribute(prefix));
-
-    public void Apply(ApplicationModel application)
-    {
-        foreach (var controller in application.Controllers)
-        {
-            foreach (var selector in controller.Selectors)
-            {
-                selector.AttributeRouteModel = selector.AttributeRouteModel is null
-                    ? new AttributeRouteModel(_prefix)
-                    : AttributeRouteModel.CombineAttributeRouteModel(_prefix, selector.AttributeRouteModel);
-            }
-        }
-    }
-}
